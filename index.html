@@ -221,6 +221,7 @@ tr.clickable{cursor:pointer;transition:background .15s}tr.clickable:hover{backgr
     <button class="tab" onclick="switchTab('map')">Map</button>
     <button class="tab" onclick="switchTab('rankings')">Rankings</button>
     <button class="tab" onclick="switchTab('cycle')">Cycle Intelligence</button>
+    <button class="tab" onclick="switchTab('revisions')">Revisions</button>
   </div>
 </div>
 <div class="container">
@@ -454,6 +455,45 @@ tr.clickable{cursor:pointer;transition:background .15s}tr.clickable:hover{backgr
   </div>
 </div>
 
+<div id="tab-revisions" class="section">
+  <div class="controls" id="revisions-controls">
+    <div class="control-group"><label>Metric</label>
+      <select id="rev-metric" onchange="updateRevisions()">
+        <option value="rg" selected>Rent Growth YoY</option>
+        <option value="erg">Effective Rent Growth YoY</option>
+        <option value="vr">Vacancy Rate</option>
+        <option value="ar">Asking Rent/Unit</option>
+        <option value="er">Effective Rent/Unit</option>
+        <option value="uc">Under Construction</option>
+        <option value="abs">Absorption</option>
+        <option value="cr">Cap Rate</option>
+        <option value="sp">Sale Price/Unit</option>
+      </select></div>
+    <div class="control-group"><label>Quarter</label>
+      <select id="rev-quarter" onchange="updateRevisions()"></select></div>
+    <div class="control-group"><label>Min. Inventory</label>
+      <select id="rev-min-inv" onchange="updateRevisions()">
+        <option value="0">All Markets</option><option value="10000">10K+</option>
+        <option value="25000" selected>25K+ (Institutional)</option>
+        <option value="50000">50K+</option><option value="100000">100K+ (Major)</option>
+      </select></div>
+  </div>
+  <div id="rev-regime" style="font-size:12px;color:var(--text-muted);margin:-4px 0 10px 0"></div>
+  <div id="rev-insight" class="insight-box"></div>
+  <div class="chart-grid" style="grid-template-columns:1fr 1fr">
+    <div class="chart-box">
+      <h3 style="color:#4CD6BB">▲ Biggest Upgrades</h3>
+      <div class="table-wrap" style="max-height:440px;overflow-y:auto"><table id="rev-up-tbl"><thead></thead><tbody></tbody></table></div>
+    </div>
+    <div class="chart-box">
+      <h3 style="color:#f87171">▼ Biggest Downgrades</h3>
+      <div class="table-wrap" style="max-height:440px;overflow-y:auto"><table id="rev-down-tbl"><thead></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+  <div class="chart-box full"><h3 id="rev-scat-title">Prior Vintage vs Current Vintage</h3>
+    <div class="chart-container xtall"><canvas id="rev-scat"></canvas></div></div>
+</div>
+
 </div>
 
 <div id="sub-map-modal-overlay" class="sub-map-modal-overlay" onclick="if(event.target===this)closeSubMapModal()">
@@ -526,7 +566,7 @@ function glp(t){const f=gfp(t);return f[f.length-1];}
 function bTR(t){const r=TR[t],mx=CP.length-1;return'<div class="time-range"><label>Period</label><div class="time-presets">'+['3Y','5Y','Hist','All','Fcast'].map(p=>'<button class="preset-btn'+(p==='All'?' active':'')+'" onclick="setP(\''+t+'\',\''+p.toLowerCase()+'\')">'+p+'</button>').join('')+'</div><div class="dual-range"><input type="range" min=0 max='+mx+' value='+r.s+' id="rs-'+t+'" oninput="oTR(\''+t+'\')"><input type="range" min=0 max='+mx+' value='+r.e+' id="re-'+t+'" oninput="oTR(\''+t+'\')"></div><div class="range-display" id="rl-'+t+'">'+CP[r.s]+' — '+CP[r.e]+'</div></div>';}
 function oTR(t){let s=+document.getElementById('rs-'+t).value,e=+document.getElementById('re-'+t).value;if(s>e){const x=s;s=e;e=x;}TR[t].s=s;TR[t].e=e;document.getElementById('rl-'+t).textContent=CP[s]+' — '+CP[e];document.querySelectorAll('#'+t+'-controls .preset-btn').forEach(b=>b.classList.remove('active'));doRefresh(t);}
 function setP(t,p){const mx=CP.length-1,fc=CP.indexOf(FCP),he=fc>0?fc-1:mx;let s,e;if(p==='3y'){s=Math.max(0,he-11);e=he;}else if(p==='5y'){s=Math.max(0,he-19);e=he;}else if(p==='hist'){s=0;e=he;}else if(p==='fcast'){s=Math.max(0,he-3);e=mx;}else{s=0;e=mx;}TR[t].s=s;TR[t].e=e;document.getElementById('rs-'+t).value=s;document.getElementById('re-'+t).value=e;document.getElementById('rl-'+t).textContent=CP[s]+' — '+CP[e];document.querySelectorAll('#'+t+'-controls .preset-btn').forEach(b=>b.classList.remove('active'));event.target.classList.add('active');doRefresh(t);}
-function doRefresh(t){if(t==='cycle'){updateCycle();return;}({national:renderNat,metro:updateMetro,compare:updateCmp,afford:updateAff,supply:updateSup,scatter:updateScatter,map:updateMap,rankings:updateRank})[t]();}
+function doRefresh(t){if(t==='cycle'){updateCycle();return;}if(t==='revisions'){updateRevisions();return;}({national:renderNat,metro:updateMetro,compare:updateCmp,afford:updateAff,supply:updateSup,scatter:updateScatter,map:updateMap,rankings:updateRank})[t]();}
 
 // === COMBO ===
 function getCI(t){if(t==='cycle')return getCI_cycle();return t==='supply'?[{n:'National (All Metros)',c:null}].concat(ML):ML;}
@@ -855,7 +895,7 @@ h+='<button class="sv-btn add" onclick="saveCurrentView()">+ Save View</button>'
 function switchTab(tab){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');document.querySelector('.tab[onclick*="\''+tab+'\'"]').classList.add('active');
-  const ctrl=document.getElementById(tab+'-controls');if(ctrl&&!ctrl.querySelector('.time-range'))ctrl.insertAdjacentHTML('beforeend',bTR(tab));
+  const ctrl=document.getElementById(tab+'-controls');if(ctrl&&tab!=='revisions'&&!ctrl.querySelector('.time-range'))ctrl.insertAdjacentHTML('beforeend',bTR(tab));
   if(tab==='national')renderNat();
   if(tab==='metro'){if(!curMetro){curMetro='New York - NY USA';document.getElementById('metro-search').value=curMetro;}updateMetro();}
   if(tab==='compare')updateCmp();
@@ -865,6 +905,7 @@ function switchTab(tab){
   if(tab==='map')updateMap();
   if(tab==='rankings')updateRank();
 if(tab==='cycle')updateCycle();
+  if(tab==='revisions')updateRevisions();
 }
 
 
@@ -1499,6 +1540,87 @@ function closeSubMapModal(){
   if(_subMapModalInst){try{_subMapModalInst.remove();}catch(e){}_subMapModalInst=null;}
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){const ov=document.getElementById('sub-map-modal-overlay');if(ov&&ov.classList.contains('open'))closeSubMapModal();}});
+
+// === REVISIONS (prior vintage vs current) ===
+let VTG=null,_revQInit=false;
+// Metric display config: pct=percentage-point delta, else level delta
+const REV_METRICS={rg:{l:'Rent Growth YoY',t:'pct'},erg:{l:'Eff. Rent Growth YoY',t:'pct'},vr:{l:'Vacancy Rate',t:'pct'},ar:{l:'Asking Rent/Unit',t:'dollar'},er:{l:'Effective Rent/Unit',t:'dollar'},uc:{l:'Under Construction',t:'number'},abs:{l:'Absorption',t:'number'},cr:{l:'Cap Rate',t:'pct'},sp:{l:'Sale Price/Unit',t:'dollar'}};
+// Resolve a period's record in a vintage, falling back to that vintage's EST/QTD label
+function vVal(store,metro,per){const s=store[metro];if(!s)return null;return s[per]||s[per+' EST']||s[per+' QTD']||null;}
+function loadVintage(cb){
+  if(VTG){cb();return;}
+  if(typeof window.VINTAGE!=='undefined'){VTG=window.VINTAGE;cb();return;}
+  document.getElementById('rev-insight').innerHTML='<em>Loading prior vintage data…</em>';
+  const s=document.createElement('script');s.src='data/vintage-2026q1.js';
+  s.onload=()=>{VTG=window.VINTAGE;cb();};
+  s.onerror=()=>{document.getElementById('rev-insight').innerHTML='<span style="color:var(--red)">Could not load prior vintage (data/vintage-2026q1.js).</span>';};
+  document.head.appendChild(s);
+}
+function updateRevisions(){
+  loadVintage(()=>{
+    // Populate quarter dropdown once (comparable CP periods present in both vintages)
+    const qSel=document.getElementById('rev-quarter');
+    if(!_revQInit){
+      const opts=CP.filter(p=>{ // include if some data resolvable in both
+        return ML.some(m=>vVal(MT,m.n,p))&&ML.some(m=>vVal(VTG.mt,m.n,p));
+      });
+      qSel.innerHTML=opts.map(p=>'<option value="'+p+'"'+(p==='2027 Q4'?' selected':'')+'>'+p+'</option>').join('');
+      _revQInit=true;
+    }
+    renderRevisions();
+  });
+}
+function renderRevisions(){
+  const metric=document.getElementById('rev-metric').value;
+  const per=document.getElementById('rev-quarter').value;
+  const minInv=+document.getElementById('rev-min-inv').value;
+  const cfg=REV_METRICS[metric],isPct=cfg.t==='pct';
+  const newLP=D.lp,oldLP=VTG.lp;
+  // Regime: forecast revision / actual-vs-forecast / history restatement
+  const ci=CP.indexOf(per),oldLPi=CP.indexOf(oldLP),newLPi=CP.indexOf(newLP);
+  let regime,rlabel;
+  if(ci>newLPi){regime='forecast';rlabel='Forecast revision — both vintages forecast '+per+'. Shows how the outlook changed.';}
+  else if(ci>oldLPi){regime='actual';rlabel='Actual vs prior forecast — '+per+' is now actual (was forecast in the '+VTG.asof+' vintage). Shows who beat / missed.';}
+  else{regime='restate';rlabel='History restatement — '+per+' was settled in both vintages. Shows data revisions.';}
+  document.getElementById('rev-regime').innerHTML='<strong>'+({forecast:'🔮 Forecast Revision',actual:'✅ Actuals vs Prior Forecast',restate:'📝 History Restatement'})[regime]+'</strong> &nbsp;·&nbsp; '+rlabel;
+  // Build per-metro deltas
+  const rows=[];
+  ML.forEach(m=>{
+    if((m.inv||0)<minInv)return;
+    const nrec=vVal(MT,m.n,per),orec=vVal(VTG.mt,m.n,per);
+    if(!nrec||!orec)return;
+    const nv=nrec[metric],ov=orec[metric];
+    if(nv==null||ov==null)return;
+    rows.push({n:m.n,nv,ov,d:nv-ov});
+  });
+  if(!rows.length){document.getElementById('rev-insight').innerHTML='No comparable data for this metric/quarter.';return;}
+  // National-level roll (inventory-weighted for rates, sum for levels)
+  const invOf=n=>{const e=ML.find(x=>x.n===n);return e?(e.inv||0):0;};
+  let natOld,natNew;
+  if(isPct){let wo=0,wn=0,wt=0;rows.forEach(r=>{const w=invOf(r.n);wo+=r.ov*w;wn+=r.nv*w;wt+=w;});natOld=wo/wt;natNew=wn/wt;}
+  else{natOld=rows.reduce((a,r)=>a+r.ov,0);natNew=rows.reduce((a,r)=>a+r.nv,0);}
+  const up=rows.filter(r=>r.d>0).length,down=rows.filter(r=>r.d<0).length;
+  const fmtV=v=>isPct?(v*100).toFixed(1)+'%':fmt(v,cfg.t);
+  const fmtD=v=>isPct?((v>=0?'+':'')+(v*100).toFixed(1)+'pp'):((v>=0?'+':'')+fmt(v,cfg.t));
+  document.getElementById('rev-insight').innerHTML='<strong>'+cfg.l+' · '+per+'</strong> — across <strong>'+rows.length+'</strong> markets, the '+
+    (regime==='forecast'?'outlook':(regime==='actual'?'realized value':'recorded value'))+' moved from <strong>'+fmtV(natOld)+'</strong> ('+VTG.asof+' vintage) to <strong>'+fmtV(natNew)+'</strong> ('+D.p.filter(p=>p.includes('QTD'))[0]?.replace(' QTD','')+' vintage). '+
+    '<strong style="color:#4CD6BB">'+up+'</strong> revised up, <strong style="color:#f87171">'+down+'</strong> revised down.';
+  // Leaderboards
+  const byUp=[...rows].sort((a,b)=>b.d-a.d).slice(0,15);
+  const byDown=[...rows].sort((a,b)=>a.d-b.d).slice(0,15);
+  const th='<tr><th>Market</th><th>'+VTG.asof+'</th><th>Now</th><th>Δ</th></tr>';
+  const mkRows=arr=>arr.map(r=>'<tr class="clickable" onclick="curMetro=\''+esc(r.n)+'\';document.getElementById(\'metro-search\').value=\''+esc(r.n)+'\';switchTab(\'metro\')"><td>'+r.n.split(' - ')[0]+'</td><td>'+fmtV(r.ov)+'</td><td>'+fmtV(r.nv)+'</td><td style="color:'+(r.d>=0?'var(--green)':'var(--red)')+';font-weight:600">'+fmtD(r.d)+'</td></tr>').join('');
+  const upT=document.getElementById('rev-up-tbl');upT.querySelector('thead').innerHTML=th;upT.querySelector('tbody').innerHTML=mkRows(byUp);
+  const dnT=document.getElementById('rev-down-tbl');dnT.querySelector('thead').innerHTML=th;dnT.querySelector('tbody').innerHTML=mkRows(byDown);
+  // Scatter: old (x) vs new (y), diagonal = no change
+  document.getElementById('rev-scat-title').textContent=cfg.l+' — '+VTG.asof+' vintage (x) vs current (y) · '+per+' · points above the line were revised up';
+  const pts=rows.map(r=>({x:isPct?r.ov*100:r.ov,y:isPct?r.nv*100:r.nv,name:r.n,d:r.d}));
+  const lo=Math.min(...pts.map(p=>Math.min(p.x,p.y))),hi=Math.max(...pts.map(p=>Math.max(p.x,p.y)));
+  dC('rev-scat');charts['rev-scat']=new Chart(document.getElementById('rev-scat').getContext('2d'),{type:'scatter',data:{datasets:[
+    {type:'line',data:[{x:lo,y:lo},{x:hi,y:hi}],borderColor:'rgba(153,144,184,.5)',borderDash:[6,4],pointRadius:0,fill:false,order:2},
+    {label:cfg.l,data:pts,parsing:false,backgroundColor:pts.map(p=>p.d>=0?'rgba(76,214,187,.6)':'rgba(248,113,113,.6)'),borderColor:pts.map(p=>p.d>=0?'#4CD6BB':'#f87171'),borderWidth:1,pointRadius:4,order:1}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const p=c.raw;if(p.name==null)return '';return p.name.split(' - ')[0]+': '+(isPct?p.x.toFixed(1)+'% → '+p.y.toFixed(1)+'%':fmt(p.x,cfg.t)+' → '+fmt(p.y,cfg.t));}}}},scales:{x:{title:{display:true,text:VTG.asof+' vintage',color:'#9990b8'},ticks:{callback:v=>isPct?v.toFixed(0)+'%':fmtTick(v,cfg.t),color:'#9990b8'},grid:{color:'rgba(58,45,94,.3)'}},y:{title:{display:true,text:'current vintage',color:'#9990b8'},ticks:{callback:v=>isPct?v.toFixed(0)+'%':fmtTick(v,cfg.t),color:'#9990b8'},grid:{color:'rgba(58,45,94,.3)'}}}}});
+}
 
 // === INIT ===
 (function(){document.getElementById('national-controls').innerHTML=bTR('national');renderNat();renderViews();const ms=document.getElementById('metro-search');if(ms){ms.innerHTML='<option value="">Select a metro...</option>'+[...ML].sort((a,b)=>a.n.localeCompare(b.n)).map(m=>'<option value="'+m.n.replace(/"/g,'&quot;')+'">'+m.n+'</option>').join('');}})();
