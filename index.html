@@ -19,6 +19,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .tabs{display:flex;gap:3px;background:var(--surface);border-radius:8px;padding:3px;flex-wrap:wrap}
 .tab{padding:7px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;color:var(--text-muted);transition:all .2s;border:none;background:none}
 .tab.active{background:var(--accent);color:#ffffff}.tab:hover:not(.active){color:var(--text);background:var(--surface2)}
+.subnav{display:inline-flex;gap:2px;background:var(--surface2);border-radius:8px;padding:3px;margin-bottom:14px}
+.subtab{padding:6px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text-muted);transition:all .2s;border:none;background:none}
+.subtab.active{background:var(--accent);color:#fff}.subtab:hover:not(.active){color:var(--text);background:var(--surface)}
 .container{max-width:1600px;margin:0 auto;padding:16px 24px}
 .controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end}
 .control-group{display:flex;flex-direction:column;gap:3px}
@@ -212,20 +215,17 @@ tr.clickable{cursor:pointer;transition:background .15s}tr.clickable:hover{backgr
     </div>
   </div>
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('national')">National</button>
-    <button class="tab" onclick="switchTab('metro')">Metro Explorer</button>
-    <button class="tab" onclick="switchTab('compare')">Compare</button>
-    <button class="tab" onclick="switchTab('afford')">Affordability</button>
+    <button class="tab active" onclick="switchTab('national')">Overview</button>
+    <button class="tab" onclick="switchTab('markets')">Markets</button>
+    <button class="tab" onclick="switchTab('screener')">Screener</button>
     <button class="tab" onclick="switchTab('supply')">Supply/Demand</button>
-    <button class="tab" onclick="switchTab('scatter')">Scatter</button>
-    <button class="tab" onclick="switchTab('map')">Map</button>
-    <button class="tab" onclick="switchTab('rankings')">Rankings</button>
     <button class="tab" onclick="switchTab('cycle')">Cycle Intelligence</button>
     <button class="tab" onclick="switchTab('revisions')">Revisions</button>
   </div>
 </div>
 <div class="container">
 <div id="saved-views-container" class="saved-views-bar"><span class="sv-label">Saved Views:</span><button class="sv-btn add" onclick="saveCurrentView()">+ Save Current View</button></div>
+
 
 <div id="tab-national" class="section active">
   <div class="controls">
@@ -254,7 +254,10 @@ tr.clickable{cursor:pointer;transition:background .15s}tr.clickable:hover{backgr
   </div>
 </div>
 
-<div id="tab-metro" class="section">
+<div id="tab-markets" class="section">
+  <div class="subnav" id="markets-subnav"><button class="subtab active" data-mode="explore" onclick="setMarketsMode('explore')">Explore</button><button class="subtab" data-mode="compare" onclick="setMarketsMode('compare')">Compare</button></div>
+  <div id="markets-explore">
+
   <div id="metro-breadcrumb" class="breadcrumb"></div>
   <div class="controls" id="metro-controls">
     <div class="control-group" id="metro-combo"><label>Metro</label>
@@ -270,9 +273,9 @@ tr.clickable{cursor:pointer;transition:background .15s}tr.clickable:hover{backgr
       <div class="table-wrap" style="max-height:500px"><table id="sub-table"><thead></thead><tbody></tbody></table></div>
     </div>
   </div>
-</div>
+  </div>
+  <div id="markets-compare" style="display:none">
 
-<div id="tab-compare" class="section">
   <div class="controls" id="compare-controls">
     <div class="control-group search-wrap"><label>Add Metro</label><input type="text" id="compare-search" placeholder="Type metro..." oninput="searchCmp(this.value)" onfocus="searchCmp(this.value)"><div id="compare-search-results" class="search-results"></div></div>
     <div class="control-group"><label>Metric</label><select id="compare-metric" onchange="updateCmp()"><option value="vr">Vacancy</option><option value="ar" selected>Asking Rent</option><option value="er">Effective Rent</option><option value="rg">Rent Growth</option><option value="sp">Sale Price</option><option value="cr">Cap Rate</option><option value="inv">Inventory</option><option value="abs">Absorption</option><option value="uc">Under Constr.</option></select></div>
@@ -280,57 +283,22 @@ tr.clickable{cursor:pointer;transition:background .15s}tr.clickable:hover{backgr
   <div id="cmp-badges" class="compare-badges"></div>
   <div class="chart-grid"><div class="chart-box full"><h3 id="cmp-ct">Comparison</h3><div class="chart-container tall"><canvas id="cmp-chart"></canvas></div></div></div>
   <div class="chart-box full" style="margin-bottom:16px"><h3>Snapshot</h3><div class="table-wrap"><table id="cmp-table"><thead></thead><tbody></tbody></table></div></div>
-</div>
-
-<div id="tab-afford" class="section">
-  <div class="controls" id="afford-controls">
-    <div class="control-group combo-wrap" id="afford-combo"><label>Metro</label>
-      <input type="text" id="afford-search" placeholder="Search..." autocomplete="off" oninput="filterCombo('afford')" onfocus="openCombo('afford')" onkeydown="comboKD(event,'afford')">
-      <div class="combo-list" id="afford-combo-list"></div></div>
-  </div>
-  <div id="afford-insight" class="insight-box"></div>
-  <div id="afford-kpis" class="kpi-row"></div>
-  <div class="chart-grid">
-    <div class="chart-box full"><h3 id="ac1t">Rent vs Income</h3><div class="chart-container tall"><canvas id="ac1"></canvas></div></div>
-    <div class="chart-box"><h3 id="ac2t">Rent/Income Ratio</h3><div class="chart-container"><canvas id="ac2"></canvas></div></div>
-    <div class="chart-box"><h3>Most &amp; Least Affordable</h3><div class="table-wrap" style="max-height:300px"><table id="afford-tbl"><thead></thead><tbody></tbody></table></div></div>
   </div>
 </div>
 
-<div id="tab-supply" class="section">
-  <div class="controls" id="supply-controls">
-    <div class="control-group"><label>Region</label>
-      <select id="supply-region" onchange="supRegion=this.value||null;if(supRegion){supMetro=null;document.getElementById('supply-search').value='National (All Metros)';}updateSup();">
-        <option value="">All Markets</option>
-        <option value="Northeast">Northeast</option>
-        <option value="Southeast">Southeast</option>
-        <option value="Sunbelt">Sunbelt</option>
-        <option value="Mountain West">Mountain West</option>
-        <option value="Midwest">Midwest</option>
-        <option value="West Coast">West Coast</option>
-        <option value="Texas">Texas</option>
-        <option value="California">California</option>
-        <option value="Florida">Florida</option>
-      </select></div>
-    <div class="control-group combo-wrap" id="supply-combo"><label>Metro / National</label>
-      <input type="text" id="supply-search" value="National (All Metros)" autocomplete="off" oninput="filterCombo('supply')" onfocus="openCombo('supply')" onkeydown="comboKD(event,'supply')">
-      <div class="combo-list" id="supply-combo-list"></div></div>
-  </div>
-  <div id="supply-insight" class="insight-box"></div>
-  <div id="supply-kpis" class="kpi-row"></div>
-  <div class="chart-grid">
-    <div class="chart-box full"><h3 id="sd1t">Supply vs Demand</h3><div class="chart-container tall"><canvas id="sd1"></canvas></div></div>
-    <div class="chart-box"><h3 id="sd2t">Cumulative Gap</h3><div class="chart-container"><canvas id="sd2"></canvas></div></div>
-    <div class="chart-box"><h3 id="sd3t">Vacancy Rate</h3><div class="chart-container"><canvas id="sd3"></canvas></div></div>
-    <div class="chart-box full"><h3>Pipeline</h3><div class="chart-container"><canvas id="sd4"></canvas></div></div>
-  </div>
-  <div class="chart-box full" id="sd-sub-section" style="display:none">
-    <h3 id="sd-sub-title">Submarket Supply/Demand Breakdown</h3>
-    <div class="table-wrap"><table id="sd-sub-table"><thead></thead><tbody></tbody></table></div>
-  </div>
-</div>
+<div id="tab-screener" class="section">
+  <div class="subnav" id="screener-subnav"><button class="subtab active" data-view="table" onclick="setScreenerView('table')">Table</button><button class="subtab" data-view="scatter" onclick="setScreenerView('scatter')">Scatter</button><button class="subtab" data-view="map" onclick="setScreenerView('map')">Map</button></div>
+  <div id="screener-table">
 
-<div id="tab-scatter" class="section">
+  <div class="controls" id="rankings-controls">
+    <div class="control-group"><label>Rank By</label><select id="rank-metric" onchange="updateRank()"><optgroup label="Levels"><option value="inv">Inventory</option><option value="ar">Asking Rent</option><option value="er">Effective Rent</option><option value="vr">Vacancy Rate</option><option value="sp">Sale Price/Unit</option><option value="cr">Cap Rate</option><option value="abs">Absorption</option><option value="nd">Deliveries</option><option value="uc">Under Constr.</option><option value="cs">Starts</option><option value="pop">Population</option><option value="hh">Households</option><option value="emp">Employment</option><option value="mhi">Median HH Income</option><option value="av">Asset Value</option></optgroup><optgroup label="Growth Rates"><option value="rg">Rent Growth YoY</option><option value="erg">Eff. Rent Growth YoY</option><option value="spg">Sale Price Growth YoY</option><option value="popg">Population Growth YoY</option><option value="empg">Employment Growth YoY</option><option value="hhg">Household Growth YoY</option><option value="invg">Inventory Growth YoY</option><option value="mhig">Income Growth YoY</option><option value="avg">Asset Value Growth YoY</option><option value="vrc">Vacancy Change YoY</option></optgroup><optgroup label="Returns"><option value="appr">Appreciation Return</option><option value="incr">Income Return</option><option value="totr">Total Return</option></optgroup><optgroup label="Ratios"><option value="ucpct">Constr. Pipeline (% of Inv.)</option><option value="ap">Absorption %</option></optgroup></select></div>
+    <div class="control-group"><label>Show</label><select id="rank-count" onchange="updateRank()"><option value="25">Top 25</option><option value="50" selected>Top 50</option><option value="100">Top 100</option><option value="394">All</option></select></div>
+  </div>
+  <div class="chart-grid"><div class="chart-box full"><h3 id="rank-ct">Top Markets</h3><div class="chart-container tall"><canvas id="rank-chart"></canvas></div></div></div>
+  <div class="table-wrap"><table id="rank-tbl"><thead></thead><tbody></tbody></table></div>
+  </div>
+  <div id="screener-scatter" style="display:none">
+
   <div class="controls" id="scatter-controls">
     <div class="control-group"><label>X Axis</label><select id="scat-x" onchange="updateScatter()">
       <optgroup label="Levels">
@@ -371,9 +339,9 @@ tr.clickable{cursor:pointer;transition:background .15s}tr.clickable:hover{backgr
   <div class="chart-grid">
     <div class="chart-box full" style="position:relative"><h3 id="scat-title">Scatter</h3><button id="scat-reset-zoom" class="reset-zoom-btn" onclick="if(charts['scat-chart']){charts['scat-chart'].resetZoom();this.style.display='none';}">Reset Zoom</button><div class="chart-container xtall"><canvas id="scat-chart"></canvas></div></div>
   </div>
-</div>
+  </div>
+  <div id="screener-map" style="display:none">
 
-<div id="tab-map" class="section">
   <div class="controls" id="map-controls">
     <div class="control-group"><label>Metric</label><select id="map-metric" onchange="updateMap()">
       <optgroup label="Levels"><option value="vr">Vacancy Rate</option><option value="ar" selected>Asking Rent</option><option value="sp">Sale Price/Unit</option><option value="cr">Cap Rate</option><option value="inv">Inventory</option><option value="uc">Under Constr.</option><option value="mhi">Median HH Income</option></optgroup>
@@ -387,17 +355,40 @@ tr.clickable{cursor:pointer;transition:background .15s}tr.clickable:hover{backgr
       <div id="leaflet-map" style="width:100%;height:100%;border-radius:10px"></div>
     </div>
   </div>
-</div>
-
-<div id="tab-rankings" class="section">
-  <div class="controls" id="rankings-controls">
-    <div class="control-group"><label>Rank By</label><select id="rank-metric" onchange="updateRank()"><optgroup label="Levels"><option value="inv">Inventory</option><option value="ar">Asking Rent</option><option value="er">Effective Rent</option><option value="vr">Vacancy Rate</option><option value="sp">Sale Price/Unit</option><option value="cr">Cap Rate</option><option value="abs">Absorption</option><option value="nd">Deliveries</option><option value="uc">Under Constr.</option><option value="cs">Starts</option><option value="pop">Population</option><option value="hh">Households</option><option value="emp">Employment</option><option value="mhi">Median HH Income</option><option value="av">Asset Value</option></optgroup><optgroup label="Growth Rates"><option value="rg">Rent Growth YoY</option><option value="erg">Eff. Rent Growth YoY</option><option value="spg">Sale Price Growth YoY</option><option value="popg">Population Growth YoY</option><option value="empg">Employment Growth YoY</option><option value="hhg">Household Growth YoY</option><option value="invg">Inventory Growth YoY</option><option value="mhig">Income Growth YoY</option><option value="avg">Asset Value Growth YoY</option><option value="vrc">Vacancy Change YoY</option></optgroup><optgroup label="Returns"><option value="appr">Appreciation Return</option><option value="incr">Income Return</option><option value="totr">Total Return</option></optgroup><optgroup label="Ratios"><option value="ucpct">Constr. Pipeline (% of Inv.)</option><option value="ap">Absorption %</option></optgroup></select></div>
-    <div class="control-group"><label>Show</label><select id="rank-count" onchange="updateRank()"><option value="25">Top 25</option><option value="50" selected>Top 50</option><option value="100">Top 100</option><option value="394">All</option></select></div>
   </div>
-  <div class="chart-grid"><div class="chart-box full"><h3 id="rank-ct">Top Markets</h3><div class="chart-container tall"><canvas id="rank-chart"></canvas></div></div></div>
-  <div class="table-wrap"><table id="rank-tbl"><thead></thead><tbody></tbody></table></div>
 </div>
-
+<div id="tab-supply" class="section">
+  <div class="controls" id="supply-controls">
+    <div class="control-group"><label>Region</label>
+      <select id="supply-region" onchange="supRegion=this.value||null;if(supRegion){supMetro=null;document.getElementById('supply-search').value='National (All Metros)';}updateSup();">
+        <option value="">All Markets</option>
+        <option value="Northeast">Northeast</option>
+        <option value="Southeast">Southeast</option>
+        <option value="Sunbelt">Sunbelt</option>
+        <option value="Mountain West">Mountain West</option>
+        <option value="Midwest">Midwest</option>
+        <option value="West Coast">West Coast</option>
+        <option value="Texas">Texas</option>
+        <option value="California">California</option>
+        <option value="Florida">Florida</option>
+      </select></div>
+    <div class="control-group combo-wrap" id="supply-combo"><label>Metro / National</label>
+      <input type="text" id="supply-search" value="National (All Metros)" autocomplete="off" oninput="filterCombo('supply')" onfocus="openCombo('supply')" onkeydown="comboKD(event,'supply')">
+      <div class="combo-list" id="supply-combo-list"></div></div>
+  </div>
+  <div id="supply-insight" class="insight-box"></div>
+  <div id="supply-kpis" class="kpi-row"></div>
+  <div class="chart-grid">
+    <div class="chart-box full"><h3 id="sd1t">Supply vs Demand</h3><div class="chart-container tall"><canvas id="sd1"></canvas></div></div>
+    <div class="chart-box"><h3 id="sd2t">Cumulative Gap</h3><div class="chart-container"><canvas id="sd2"></canvas></div></div>
+    <div class="chart-box"><h3 id="sd3t">Vacancy Rate</h3><div class="chart-container"><canvas id="sd3"></canvas></div></div>
+    <div class="chart-box full"><h3>Pipeline</h3><div class="chart-container"><canvas id="sd4"></canvas></div></div>
+  </div>
+  <div class="chart-box full" id="sd-sub-section" style="display:none">
+    <h3 id="sd-sub-title">Submarket Supply/Demand Breakdown</h3>
+    <div class="table-wrap"><table id="sd-sub-table"><thead></thead><tbody></tbody></table></div>
+  </div>
+</div>
 <div id="tab-cycle" class="section">
   <div class="controls" id="cycle-controls">
     <div class="control-group"><label>Focus Metro</label>
@@ -566,16 +557,16 @@ function glp(t){const f=gfp(t);return f[f.length-1];}
 function bTR(t){const r=TR[t],mx=CP.length-1;return'<div class="time-range"><label>Period</label><div class="time-presets">'+['3Y','5Y','Hist','All','Fcast'].map(p=>'<button class="preset-btn'+(p==='All'?' active':'')+'" onclick="setP(\''+t+'\',\''+p.toLowerCase()+'\')">'+p+'</button>').join('')+'</div><div class="dual-range"><input type="range" min=0 max='+mx+' value='+r.s+' id="rs-'+t+'" oninput="oTR(\''+t+'\')"><input type="range" min=0 max='+mx+' value='+r.e+' id="re-'+t+'" oninput="oTR(\''+t+'\')"></div><div class="range-display" id="rl-'+t+'">'+CP[r.s]+' — '+CP[r.e]+'</div></div>';}
 function oTR(t){let s=+document.getElementById('rs-'+t).value,e=+document.getElementById('re-'+t).value;if(s>e){const x=s;s=e;e=x;}TR[t].s=s;TR[t].e=e;document.getElementById('rl-'+t).textContent=CP[s]+' — '+CP[e];document.querySelectorAll('#'+t+'-controls .preset-btn').forEach(b=>b.classList.remove('active'));doRefresh(t);}
 function setP(t,p){const mx=CP.length-1,fc=CP.indexOf(FCP),he=fc>0?fc-1:mx;let s,e;if(p==='3y'){s=Math.max(0,he-11);e=he;}else if(p==='5y'){s=Math.max(0,he-19);e=he;}else if(p==='hist'){s=0;e=he;}else if(p==='fcast'){s=Math.max(0,he-3);e=mx;}else{s=0;e=mx;}TR[t].s=s;TR[t].e=e;document.getElementById('rs-'+t).value=s;document.getElementById('re-'+t).value=e;document.getElementById('rl-'+t).textContent=CP[s]+' — '+CP[e];document.querySelectorAll('#'+t+'-controls .preset-btn').forEach(b=>b.classList.remove('active'));event.target.classList.add('active');doRefresh(t);}
-function doRefresh(t){if(t==='cycle'){updateCycle();return;}if(t==='revisions'){updateRevisions();return;}({national:renderNat,metro:updateMetro,compare:updateCmp,afford:updateAff,supply:updateSup,scatter:updateScatter,map:updateMap,rankings:updateRank})[t]();}
+function doRefresh(t){if(t==='cycle'){updateCycle();return;}if(t==='revisions'){updateRevisions();return;}({national:renderNat,metro:updateMetro,compare:updateCmp,supply:updateSup,scatter:updateScatter,map:updateMap,rankings:updateRank})[t]();}
 
 // === COMBO ===
 function getCI(t){if(t==='cycle')return getCI_cycle();return t==='supply'?[{n:'National (All Metros)',c:null}].concat(ML):ML;}
 function openCombo(t){filterCombo(t);document.getElementById(t+'-combo-list').classList.add('open');comboHL[t]=-1;}
-function closeCombo(t){document.getElementById(t+'-combo-list').classList.remove('open');}
+function closeCombo(t){const el=document.getElementById(t+'-combo-list');if(el)el.classList.remove('open');}
 function filterCombo(t){const q=document.getElementById(t+'-search').value.toLowerCase(),items=getCI(t),list=document.getElementById(t+'-combo-list');let f=q.length>0?items.filter(m=>m.n.toLowerCase().includes(q)):items;let h='';if(q.length===0&&t!=='supply'){h+='<div class="group-label">Top 25 by Inventory</div>';f.slice(0,25).forEach((m,i)=>{const sc=m.c&&CS[String(m.c)]?CS[String(m.c)].filter(s=>ST[s]).length:0;h+='<div data-i="'+i+'" onclick="pickC(\''+t+'\',\''+esc(m.n)+'\')">'+m.n+(sc?'<span class="sub-count">'+sc+' subs</span>':'')+'</div>';});h+='<div class="group-label">All A–Z</div>';[...f].sort((a,b)=>a.n.localeCompare(b.n)).forEach((m,i)=>{const sc=m.c&&CS[String(m.c)]?CS[String(m.c)].filter(s=>ST[s]).length:0;h+='<div data-i="'+(25+i)+'" onclick="pickC(\''+t+'\',\''+esc(m.n)+'\')">'+m.n+(sc?'<span class="sub-count">'+sc+' subs</span>':'')+'</div>';});}else{f.slice(0,50).forEach((m,i)=>{const sc=m.c&&CS[String(m.c)]?CS[String(m.c)].filter(s=>ST[s]).length:0;h+='<div data-i="'+i+'" onclick="pickC(\''+t+'\','+(m.c===null?'null':'\''+esc(m.n)+'\'')+')">'+m.n+(m.c!==null&&sc?'<span class="sub-count">'+sc+' subs</span>':'')+'</div>';});}list.innerHTML=h;list.classList.add('open');}
 function pickC(t,n){closeCombo(t);const inp=document.getElementById(t+'-search');if(t==='metro'){curMetro=n;inp.value=n;updateMetro();}else if(t==='afford'){affMetro=n;inp.value=n;updateAff();}else if(t==='supply'){supMetro=n;supRegion=null;const rs=document.getElementById('supply-region');if(rs)rs.value='';inp.value=n||'National (All Metros)';updateSup();}else if(t==='cycle'){cycMetro=n;inp.value=n;updateCycle();}}
 function comboKD(e,t){const list=document.getElementById(t+'-combo-list'),items=list.querySelectorAll('div:not(.group-label)');if(e.key==='ArrowDown'){e.preventDefault();comboHL[t]=Math.min(comboHL[t]+1,items.length-1);items.forEach((el,i)=>el.classList.toggle('highlighted',i===comboHL[t]));items[comboHL[t]]?.scrollIntoView({block:'nearest'});}else if(e.key==='ArrowUp'){e.preventDefault();comboHL[t]=Math.max(comboHL[t]-1,0);items.forEach((el,i)=>el.classList.toggle('highlighted',i===comboHL[t]));items[comboHL[t]]?.scrollIntoView({block:'nearest'});}else if(e.key==='Enter'&&comboHL[t]>=0){e.preventDefault();items[comboHL[t]]?.click();}else if(e.key==='Escape')closeCombo(t);}
-document.addEventListener('click',e=>{['metro','afford','supply'].forEach(t=>{if(!e.target.closest('#'+t+'-combo'))closeCombo(t);});if(!e.target.closest('.search-wrap'))document.querySelectorAll('.search-results').forEach(el=>el.style.display='none');});
+document.addEventListener('click',e=>{['supply','cycle'].forEach(t=>{if(!e.target.closest('#'+t+'-combo'))closeCombo(t);});if(!e.target.closest('.search-wrap'))document.querySelectorAll('.search-results').forEach(el=>el.style.display='none');});
 function esc(s){return s.replace(/'/g,"\\'");}
 
 // === HELPERS ===
@@ -712,20 +703,6 @@ let th='<tr><th>Metro</th><th>Vacancy</th><th>Rent</th><th>Eff Rent</th><th>Grow
 cmpMetros.forEach((n,i)=>{const d=MT[n]?.[l]||{},cUc=d.uc?d.uc:lv(MT[n],'uc',f,0,true);tb+='<tr><td style="border-left:3px solid '+CL[i%CL.length]+';padding-left:10px"><strong>'+n+'</strong></td><td>'+fmt(d.vr,'pct')+'</td><td>'+fmt(d.ar,'dollar')+'</td><td>'+fmt(d.er,'dollar')+'</td><td>'+fmt(d.rg,'pct')+'</td><td>'+fmt(d.inv,'number')+'</td><td>'+fmt(cUc,'number')+'</td><td>'+fmt(d.sp,'dollar')+'</td><td>'+fmt(d.cr,'pct')+'</td></tr>';});
 document.querySelector('#cmp-table thead').innerHTML=th;document.querySelector('#cmp-table tbody').innerHTML=tb;}
 
-// === AFFORDABILITY ===
-function updateAff(){const f=gfp('afford'),l=glp('afford'),n=affMetro,isN=!n,src=isN?NT:(MT[n]||{}),title=isN?'National':n;
-const ld=src[l]||{},aR=ld.ar?ld.ar*12:null,mhi=ld.mhi||null,ratio=(aR&&mhi)?aR/mhi:null,th30=mhi?mhi*.3:null;
-document.getElementById('afford-kpis').innerHTML='<div class="kpi"><div class="label">Annual Rent</div><div class="value">'+fmt(aR,'dollar')+'</div></div><div class="kpi"><div class="label">Median Income</div><div class="value">'+fmt(mhi,'dollar')+'</div></div><div class="kpi"><div class="label">Rent/Income</div><div class="value">'+(ratio?(ratio*100).toFixed(1)+'%':'—')+'</div><div class="change '+(ratio>.3?'negative':'positive')+'">'+(ratio?(ratio>.3?'Cost-Burdened':'Affordable'):'—')+'</div></div><div class="kpi"><div class="label">Affordable Mo. Rent</div><div class="value">'+fmt(th30?th30/12:null,'dollar')+'</div></div>';
-let ins='<strong>'+title+'</strong>: ';if(ratio){ins+='Renters spend <strong>'+(ratio*100).toFixed(1)+'%</strong> of income. ';if(ratio>.3)ins+='Exceeds 30% by <strong>$'+Math.round((aR-th30)/12).toLocaleString()+'</strong>/mo.';else ins+='<strong>$'+Math.round((th30-aR)/12).toLocaleString()+'</strong>/mo headroom.';}
-document.getElementById('afford-insight').innerHTML=ins;document.getElementById('ac1t').textContent='Rent vs Income — '+title;document.getElementById('ac2t').textContent='Rent/Income — '+title;
-dC('ac1');charts['ac1']=new Chart(document.getElementById('ac1').getContext('2d'),{type:'line',data:{labels:f,datasets:[{label:'Annual Rent',data:f.map(p=>src[p]?.ar?src[p].ar*12:null),borderColor:'#8B5CF6',backgroundColor:'rgba(139,92,246,.1)',fill:true,tension:.3,pointRadius:0},{label:'Median Income',data:f.map(p=>src[p]?.mhi||null),borderColor:'#4CD6BB',tension:.3,pointRadius:0},{label:'30% of Income',data:f.map(p=>src[p]?.mhi?src[p].mhi*.3:null),borderColor:'#fbbf24',borderDash:[6,3],tension:.3,pointRadius:0}]},options:{responsive:true,spanGaps:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+': $'+Math.round(c.parsed.y).toLocaleString()}},...fcA(f)},scales:{x:{ticks:{maxTicksLimit:12,maxRotation:45}},y:{ticks:{callback:v=>'$'+Math.round(v/1000)+'K'}}}}});
-const rD=f.map(p=>{const r=src[p]?.ar?src[p].ar*12:null,i=src[p]?.mhi;return(r&&i)?(r/i)*100:null;});
-dC('ac2');charts['ac2']=new Chart(document.getElementById('ac2').getContext('2d'),{type:'line',data:{labels:f,datasets:[{label:'Rent/Income %',data:rD,borderColor:'#C053EF',backgroundColor:'rgba(192,83,239,.1)',fill:true,tension:.3,pointRadius:0},{label:'30% Line',data:f.map(()=>30),borderColor:'#f87171',borderDash:[6,3],pointRadius:0}]},options:{responsive:true,spanGaps:true,maintainAspectRatio:false,interaction:{intersect:false,mode:'index'},plugins:{tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.parsed.y?.toFixed(1)||'—')+'%'}},...fcA(f)},scales:{x:{ticks:{maxTicksLimit:10,maxRotation:45}},y:{ticks:{callback:v=>v+'%'},suggestedMin:15,suggestedMax:45}}}});
-let aD=[];ML.forEach(m=>{const d=MT[m.n]?.[l];if(d&&d.ar&&d.mhi)aD.push({name:m.n,rent:d.ar,mhi:d.mhi,ratio:(d.ar*12)/d.mhi});});aD.sort((a,b)=>a.ratio-b.ratio);const t10=aD.slice(0,10),b10=aD.slice(-10).reverse();
-let thead='<tr><th>#</th><th>Most Affordable</th><th>Ratio</th><th>Rent</th><th></th><th>#</th><th>Least Affordable</th><th>Ratio</th><th>Rent</th></tr>',tbody='';
-for(let i=0;i<10;i++){const t=t10[i],b=b10[i];if(!t||!b)continue;tbody+='<tr><td>'+(i+1)+'</td><td>'+t.name+'</td><td><span class="pill low">'+(t.ratio*100).toFixed(1)+'%</span></td><td>'+fmt(t.rent,'dollar')+'</td><td></td><td>'+(i+1)+'</td><td>'+b.name+'</td><td><span class="pill high">'+(b.ratio*100).toFixed(1)+'%</span></td><td>'+fmt(b.rent,'dollar')+'</td></tr>';}
-document.querySelector('#afford-tbl thead').innerHTML=thead;document.querySelector('#afford-tbl tbody').innerHTML=tbody;}
-
 // === SUPPLY/DEMAND ===
 function updateSup(){const f=gfp('supply'),l=glp('supply'),n=supMetro;
 let src,title,isN=false,isRegion=false,regionMetros=[];
@@ -777,6 +754,8 @@ mkLC('sd-sub-c3',[{label:'Asking Rent',data:f.map(p=>ts[p]?.ar),borderColor:'#8B
 // === SCATTER ===
 function axU(k){const t=mT(k);if(t==='pct')return' (%)';if(t==='dollar')return' ($)';if(['inv','abs','nd','uc','pop','hh','emp','cs','dem'].includes(k))return' (Units)';return'';}
 function fmtTick(v,t){if(t==='pct')return v.toFixed(1)+'%';if(t==='dollar')return'$'+Math.round(v).toLocaleString();return v>=1000?Math.round(v/1000)+'k':Math.round(v).toLocaleString();}
+
+// === SCATTER ===
 function updateScatter(){const xk=document.getElementById('scat-x').value,yk=document.getElementById('scat-y').value,sk=document.getElementById('scat-size').value;
 const f=gfp('scatter'),l=f[f.length-1];const xt=mT(xk),yt=mT(yk);
 let pts=[];ML.forEach(m=>{const d=MT[m.n]?.[l];if(!d)return;let xv=d[xk],yv=d[yk];if(xv==null||yv==null)return;
@@ -892,20 +871,41 @@ savedViews.forEach(v=>{h+='<button class="sv-btn" onclick="loadView('+v.id+')">'
 h+='<button class="sv-btn add" onclick="saveCurrentView()">+ Save View</button>';c.innerHTML=h;}
 
 // === TAB SWITCH ===
+let marketsMode='explore',screenerView='table';
+// Append a time-range control to an inner control bar the first time it's shown
+function ensureTR(ctrlId,key){const c=document.getElementById(ctrlId);if(c&&!c.querySelector('.time-range'))c.insertAdjacentHTML('beforeend',bTR(key));}
+// Legacy tab names (from chart clicks, saved views) redirect into the merged tabs
+const LEGACY_TAB={metro:['markets','explore'],compare:['markets','compare'],scatter:['screener','scatter'],map:['screener','map'],rankings:['screener','table'],afford:['national',null]};
 function switchTab(tab){
+  if(LEGACY_TAB[tab]){const r=LEGACY_TAB[tab];if(r[1]){if(r[0]==='markets')marketsMode=r[1];else screenerView=r[1];}tab=r[0];}
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('tab-'+tab).classList.add('active');document.querySelector('.tab[onclick*="\''+tab+'\'"]').classList.add('active');
-  const ctrl=document.getElementById(tab+'-controls');if(ctrl&&tab!=='revisions'&&!ctrl.querySelector('.time-range'))ctrl.insertAdjacentHTML('beforeend',bTR(tab));
+  const sec=document.getElementById('tab-'+tab);if(sec)sec.classList.add('active');
+  const btn=document.querySelector('.tab[onclick*="\''+tab+'\'"]');if(btn)btn.classList.add('active');
+  const ctrl=document.getElementById(tab+'-controls');if(ctrl&&TR[tab]&&!ctrl.querySelector('.time-range'))ctrl.insertAdjacentHTML('beforeend',bTR(tab));
   if(tab==='national')renderNat();
-  if(tab==='metro'){if(!curMetro){curMetro='New York - NY USA';document.getElementById('metro-search').value=curMetro;}updateMetro();}
-  if(tab==='compare')updateCmp();
-  if(tab==='afford')updateAff();
+  if(tab==='markets')setMarketsMode(marketsMode);
+  if(tab==='screener')setScreenerView(screenerView);
   if(tab==='supply'){if(!supMetro)document.getElementById('supply-search').value='National (All Metros)';updateSup();}
-  if(tab==='scatter')updateScatter();
-  if(tab==='map')updateMap();
-  if(tab==='rankings')updateRank();
-if(tab==='cycle')updateCycle();
+  if(tab==='cycle')updateCycle();
   if(tab==='revisions')updateRevisions();
+}
+function setMarketsMode(mode){
+  marketsMode=mode;
+  document.getElementById('markets-explore').style.display=mode==='explore'?'':'none';
+  document.getElementById('markets-compare').style.display=mode==='compare'?'':'none';
+  document.querySelectorAll('#markets-subnav .subtab').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+  if(mode==='explore'){ensureTR('metro-controls','metro');if(!curMetro){curMetro='New York - NY USA';document.getElementById('metro-search').value=curMetro;}updateMetro();}
+  else{ensureTR('compare-controls','compare');updateCmp();}
+}
+function setScreenerView(view){
+  screenerView=view;
+  document.getElementById('screener-table').style.display=view==='table'?'':'none';
+  document.getElementById('screener-scatter').style.display=view==='scatter'?'':'none';
+  document.getElementById('screener-map').style.display=view==='map'?'':'none';
+  document.querySelectorAll('#screener-subnav .subtab').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+  if(view==='table'){ensureTR('rankings-controls','rankings');updateRank();}
+  else if(view==='scatter'){ensureTR('scatter-controls','scatter');updateScatter();}
+  else{updateMap();setTimeout(()=>{if(leafletMap)leafletMap.invalidateSize();},80);}
 }
 
 
