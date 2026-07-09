@@ -1,0 +1,4 @@
+# local build/test artifacts
+node_modules/
+*.meta.json
+__MACOSX/
