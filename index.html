@@ -460,8 +460,10 @@ tr.clickable{cursor:pointer;transition:background .15s}tr.clickable:hover{backgr
         <option value="cr">Cap Rate</option>
         <option value="sp">Sale Price/Unit</option>
       </select></div>
-    <div class="control-group"><label>Quarter</label>
-      <select id="rev-quarter" onchange="updateRevisions()"></select></div>
+    <div class="control-group"><label>Start Quarter</label>
+      <select id="rev-q-start" onchange="updateRevisions()"></select></div>
+    <div class="control-group"><label>End Quarter</label>
+      <select id="rev-q-end" onchange="updateRevisions()"></select></div>
     <div class="control-group"><label>Min. Inventory</label>
       <select id="rev-min-inv" onchange="updateRevisions()">
         <option value="0">All Markets</option><option value="10000">10K+</option>
@@ -1542,7 +1544,7 @@ function closeSubMapModal(){
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){const ov=document.getElementById('sub-map-modal-overlay');if(ov&&ov.classList.contains('open'))closeSubMapModal();}});
 
 // === REVISIONS (prior vintage vs current) ===
-let VTG=null,_revQInit=false;
+let VTG=null,_revQInit=false,_revOpts=[];
 // Metric display config: pct=percentage-point delta, else level delta
 const REV_METRICS={rg:{l:'Rent Growth YoY',t:'pct'},erg:{l:'Eff. Rent Growth YoY',t:'pct'},vr:{l:'Vacancy Rate',t:'pct'},ar:{l:'Asking Rent/Unit',t:'dollar'},er:{l:'Effective Rent/Unit',t:'dollar'},uc:{l:'Under Construction',t:'number'},abs:{l:'Absorption',t:'number'},cr:{l:'Cap Rate',t:'pct'},sp:{l:'Sale Price/Unit',t:'dollar'}};
 // Resolve a period's record in a vintage, falling back to that vintage's EST/QTD label
@@ -1558,13 +1560,16 @@ function loadVintage(cb){
 }
 function updateRevisions(){
   loadVintage(()=>{
-    // Populate quarter dropdown once (comparable CP periods present in both vintages)
-    const qSel=document.getElementById('rev-quarter');
+    // Populate both quarter dropdowns once (comparable CP periods present in both vintages)
+    const sSel=document.getElementById('rev-q-start'),eSel=document.getElementById('rev-q-end');
     if(!_revQInit){
-      const opts=CP.filter(p=>{ // include if some data resolvable in both
-        return ML.some(m=>vVal(MT,m.n,p))&&ML.some(m=>vVal(VTG.mt,m.n,p));
-      });
-      qSel.innerHTML=opts.map(p=>'<option value="'+p+'"'+(p==='2027 Q4'?' selected':'')+'>'+p+'</option>').join('');
+      const opts=CP.filter(p=>ML.some(m=>vVal(MT,m.n,p))&&ML.some(m=>vVal(VTG.mt,m.n,p)));
+      _revOpts=opts;
+      // Defaults: near-term forward window (first forecast quarter -> ~2027 Q4)
+      const dStart=opts.includes(FCP)?FCP:opts[0];
+      const dEnd=opts.includes('2027 Q4')?'2027 Q4':opts[opts.length-1];
+      sSel.innerHTML=opts.map(p=>'<option value="'+p+'"'+(p===dStart?' selected':'')+'>'+p+'</option>').join('');
+      eSel.innerHTML=opts.map(p=>'<option value="'+p+'"'+(p===dEnd?' selected':'')+'>'+p+'</option>').join('');
       _revQInit=true;
     }
     renderRevisions();
@@ -1572,29 +1577,43 @@ function updateRevisions(){
 }
 function renderRevisions(){
   const metric=document.getElementById('rev-metric').value;
-  const per=document.getElementById('rev-quarter').value;
+  let pStart=document.getElementById('rev-q-start').value,pEnd=document.getElementById('rev-q-end').value;
   const minInv=+document.getElementById('rev-min-inv').value;
   const cfg=REV_METRICS[metric],isPct=cfg.t==='pct';
-  const newLP=D.lp,oldLP=VTG.lp;
-  // Regime: forecast revision / actual-vs-forecast / history restatement
-  const ci=CP.indexOf(per),oldLPi=CP.indexOf(oldLP),newLPi=CP.indexOf(newLP);
+  const oldLPi=CP.indexOf(VTG.lp),newLPi=CP.indexOf(D.lp);
+  // Order-guard the range, then build the list of comparable quarters within it
+  let si=CP.indexOf(pStart),ei=CP.indexOf(pEnd);
+  if(si>ei){const t=si;si=ei;ei=t;const tp=pStart;pStart=pEnd;pEnd=tp;}
+  const range=_revOpts.filter(p=>{const i=CP.indexOf(p);return i>=si&&i<=ei;});
+  const single=range.length===1;
+  const rangeLabel=single?pStart:(pStart+' → '+pEnd);
+  // Regime classification for the whole range
   let regime,rlabel;
-  if(ci>newLPi){regime='forecast';rlabel='Forecast revision — both vintages forecast '+per+'. Shows how the outlook changed.';}
-  else if(ci>oldLPi){regime='actual';rlabel='Actual vs prior forecast — '+per+' is now actual (was forecast in the '+VTG.asof+' vintage). Shows who beat / missed.';}
-  else{regime='restate';rlabel='History restatement — '+per+' was settled in both vintages. Shows data revisions.';}
-  document.getElementById('rev-regime').innerHTML='<strong>'+({forecast:'🔮 Forecast Revision',actual:'✅ Actuals vs Prior Forecast',restate:'📝 History Restatement'})[regime]+'</strong> &nbsp;·&nbsp; '+rlabel;
-  // Build per-metro deltas
+  const allFore=si>newLPi,allSettled=ei<=oldLPi,allActual=si>oldLPi&&ei<=newLPi;
+  if(allFore){regime='forecast';rlabel='Forecast revision — the '+rangeLabel+' outlook is forecast in both vintages. Shows how the outlook changed.';}
+  else if(allActual){regime='actual';rlabel='Actuals vs prior forecast — '+rangeLabel+' is now actual (was forecast in the '+VTG.asof+' vintage). Shows who beat / missed.';}
+  else if(allSettled){regime='restate';rlabel='History restatement — '+rangeLabel+' was settled in both vintages. Shows data revisions.';}
+  else{regime='mixed';rlabel='Mixed span — '+rangeLabel+' crosses the actual/forecast boundary; blends realized surprises and forecast revisions.';}
+  const badge={forecast:'🔮 Forecast Revision',actual:'✅ Actuals vs Prior Forecast',restate:'📝 History Restatement',mixed:'🔀 Mixed Span'}[regime];
+  document.getElementById('rev-regime').innerHTML='<strong>'+badge+'</strong> &nbsp;·&nbsp; '+rlabel+(single?'':' &nbsp;·&nbsp; averaged across '+range.length+' quarters');
+  // Per-metro: average the metric across the range in each vintage, delta = avg(new) - avg(old)
   const rows=[];
   ML.forEach(m=>{
     if((m.inv||0)<minInv)return;
-    const nrec=vVal(MT,m.n,per),orec=vVal(VTG.mt,m.n,per);
-    if(!nrec||!orec)return;
-    const nv=nrec[metric],ov=orec[metric];
-    if(nv==null||ov==null)return;
+    let sn=0,so=0,cn=0;
+    range.forEach(p=>{
+      const nrec=vVal(MT,m.n,p),orec=vVal(VTG.mt,m.n,p);
+      if(!nrec||!orec)return;
+      const nv=nrec[metric],ov=orec[metric];
+      if(nv==null||ov==null)return;
+      sn+=nv;so+=ov;cn++;
+    });
+    if(cn===0)return;
+    const nv=sn/cn,ov=so/cn;
     rows.push({n:m.n,nv,ov,d:nv-ov});
   });
-  if(!rows.length){document.getElementById('rev-insight').innerHTML='No comparable data for this metric/quarter.';return;}
-  // National-level roll (inventory-weighted for rates, sum for levels)
+  if(!rows.length){document.getElementById('rev-insight').innerHTML='No comparable data for this metric/range.';return;}
+  // National roll (inventory-weighted for rates, sum for levels) — operates on range-averaged values
   const invOf=n=>{const e=ML.find(x=>x.n===n);return e?(e.inv||0):0;};
   let natOld,natNew;
   if(isPct){let wo=0,wn=0,wt=0;rows.forEach(r=>{const w=invOf(r.n);wo+=r.ov*w;wn+=r.nv*w;wt+=w;});natOld=wo/wt;natNew=wn/wt;}
@@ -1602,18 +1621,20 @@ function renderRevisions(){
   const up=rows.filter(r=>r.d>0).length,down=rows.filter(r=>r.d<0).length;
   const fmtV=v=>isPct?(v*100).toFixed(1)+'%':fmt(v,cfg.t);
   const fmtD=v=>isPct?((v>=0?'+':'')+(v*100).toFixed(1)+'pp'):((v>=0?'+':'')+fmt(v,cfg.t));
-  document.getElementById('rev-insight').innerHTML='<strong>'+cfg.l+' · '+per+'</strong> — across <strong>'+rows.length+'</strong> markets, the '+
-    (regime==='forecast'?'outlook':(regime==='actual'?'realized value':'recorded value'))+' moved from <strong>'+fmtV(natOld)+'</strong> ('+VTG.asof+' vintage) to <strong>'+fmtV(natNew)+'</strong> ('+D.p.filter(p=>p.includes('QTD'))[0]?.replace(' QTD','')+' vintage). '+
+  const curVint=(D.p.filter(p=>p.includes('QTD'))[0]||'').replace(' QTD','')||'current';
+  document.getElementById('rev-insight').innerHTML='<strong>'+cfg.l+' · '+rangeLabel+'</strong> — across <strong>'+rows.length+'</strong> markets, the '+(single?'':'average ')+
+    (regime==='forecast'?'outlook':(regime==='actual'?'realized value':(regime==='mixed'?'value':'recorded value')))+' moved from <strong>'+fmtV(natOld)+'</strong> ('+VTG.asof+' vintage) to <strong>'+fmtV(natNew)+'</strong> ('+curVint+' vintage). '+
     '<strong style="color:#4CD6BB">'+up+'</strong> revised up, <strong style="color:#f87171">'+down+'</strong> revised down.';
   // Leaderboards
   const byUp=[...rows].sort((a,b)=>b.d-a.d).slice(0,15);
   const byDown=[...rows].sort((a,b)=>a.d-b.d).slice(0,15);
-  const th='<tr><th>Market</th><th>'+VTG.asof+'</th><th>Now</th><th>Δ</th></tr>';
+  const avgTag=single?'':'avg ';
+  const th='<tr><th>Market</th><th>'+avgTag+VTG.asof+'</th><th>'+avgTag+'now</th><th>Δ</th></tr>';
   const mkRows=arr=>arr.map(r=>'<tr class="clickable" onclick="curMetro=\''+esc(r.n)+'\';document.getElementById(\'metro-search\').value=\''+esc(r.n)+'\';switchTab(\'metro\')"><td>'+r.n.split(' - ')[0]+'</td><td>'+fmtV(r.ov)+'</td><td>'+fmtV(r.nv)+'</td><td style="color:'+(r.d>=0?'var(--green)':'var(--red)')+';font-weight:600">'+fmtD(r.d)+'</td></tr>').join('');
   const upT=document.getElementById('rev-up-tbl');upT.querySelector('thead').innerHTML=th;upT.querySelector('tbody').innerHTML=mkRows(byUp);
   const dnT=document.getElementById('rev-down-tbl');dnT.querySelector('thead').innerHTML=th;dnT.querySelector('tbody').innerHTML=mkRows(byDown);
   // Scatter: old (x) vs new (y), diagonal = no change
-  document.getElementById('rev-scat-title').textContent=cfg.l+' — '+VTG.asof+' vintage (x) vs current (y) · '+per+' · points above the line were revised up';
+  document.getElementById('rev-scat-title').textContent=cfg.l+' — '+VTG.asof+' vintage (x) vs current (y) · '+rangeLabel+(single?'':' avg')+' · points above the line were revised up';
   const pts=rows.map(r=>({x:isPct?r.ov*100:r.ov,y:isPct?r.nv*100:r.nv,name:r.n,d:r.d}));
   const lo=Math.min(...pts.map(p=>Math.min(p.x,p.y))),hi=Math.max(...pts.map(p=>Math.max(p.x,p.y)));
   dC('rev-scat');charts['rev-scat']=new Chart(document.getElementById('rev-scat').getContext('2d'),{type:'scatter',data:{datasets:[
