@@ -2,3 +2,10 @@
 node_modules/
 *.meta.json
 __MACOSX/
+
+# finance tracker: never commit financial data or credentials
+.finance/
+*.db
+finance/dashboard.html
+__pycache__/
+*.pyc

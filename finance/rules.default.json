@@ -1,0 +1,57 @@
+[
+  {"pattern": "\\b(payroll|direct dep|dir dep|salary|gusto|adp|deposit)\\b", "field": "both", "is_regex": true, "category": "Income", "priority": 200},
+  {"pattern": "\\b(transfer|xfer|zelle|venmo|cash app|paypal|withdrawal|autopay|online pmt|epay|thank you|payment received)\\b", "field": "both", "is_regex": true, "category": "Transfer", "priority": 190},
+
+  {"pattern": "whole foods", "category": "Groceries", "priority": 120},
+  {"pattern": "trader joe", "category": "Groceries", "priority": 120},
+  {"pattern": "safeway", "category": "Groceries", "priority": 120},
+  {"pattern": "kroger", "category": "Groceries", "priority": 120},
+  {"pattern": "costco", "category": "Groceries", "priority": 120},
+  {"pattern": "aldi", "category": "Groceries", "priority": 120},
+  {"pattern": "grocery", "category": "Groceries", "priority": 110},
+
+  {"pattern": "starbucks", "category": "Dining", "priority": 120},
+  {"pattern": "restaurant", "category": "Dining", "priority": 110},
+  {"pattern": "coffee", "category": "Dining", "priority": 110},
+  {"pattern": "\\b(cafe|café|grill|pizza|tavern|bar & grill|taqueria|sushi)\\b", "field": "both", "is_regex": true, "category": "Dining", "priority": 110},
+  {"pattern": "doordash", "category": "Dining", "priority": 120},
+  {"pattern": "uber eats", "category": "Dining", "priority": 120},
+  {"pattern": "grubhub", "category": "Dining", "priority": 120},
+  {"pattern": "chipotle", "category": "Dining", "priority": 120},
+  {"pattern": "mcdonald", "category": "Dining", "priority": 120},
+
+  {"pattern": "shell", "category": "Gas & Fuel", "priority": 120},
+  {"pattern": "chevron", "category": "Gas & Fuel", "priority": 120},
+  {"pattern": "exxon", "category": "Gas & Fuel", "priority": 120},
+  {"pattern": "\\bgas\\b", "field": "both", "is_regex": true, "category": "Gas & Fuel", "priority": 100},
+
+  {"pattern": "uber", "category": "Transportation", "priority": 100},
+  {"pattern": "lyft", "category": "Transportation", "priority": 110},
+  {"pattern": "\\b(bart|metro|transit|parking|toll)\\b", "field": "both", "is_regex": true, "category": "Transportation", "priority": 100},
+
+  {"pattern": "amazon", "category": "Shopping", "priority": 100},
+  {"pattern": "target", "category": "Shopping", "priority": 100},
+  {"pattern": "walmart", "category": "Shopping", "priority": 100},
+  {"pattern": "\\b(best buy|ikea|home depot|lowes)\\b", "field": "both", "is_regex": true, "category": "Shopping", "priority": 100},
+
+  {"pattern": "netflix", "category": "Subscriptions", "priority": 130},
+  {"pattern": "spotify", "category": "Subscriptions", "priority": 130},
+  {"pattern": "hulu", "category": "Subscriptions", "priority": 130},
+  {"pattern": "disney", "category": "Subscriptions", "priority": 130},
+  {"pattern": "\\b(prime video|hbo|youtube premium|icloud|dropbox|adobe|patreon)\\b", "field": "both", "is_regex": true, "category": "Subscriptions", "priority": 130},
+
+  {"pattern": "\\b(rent|landlord|apartment|property mgmt|leasing)\\b", "field": "both", "is_regex": true, "category": "Rent & Housing", "priority": 140},
+  {"pattern": "mortgage", "category": "Rent & Housing", "priority": 140},
+
+  {"pattern": "\\b(pg&e|pge|comcast|xfinity|at&t|verizon|t-mobile|water|electric|utility|internet|sewer)\\b", "field": "both", "is_regex": true, "category": "Utilities", "priority": 130},
+
+  {"pattern": "\\b(cvs|walgreens|pharmacy|kaiser|dental|clinic|hospital|medical|doctor)\\b", "field": "both", "is_regex": true, "category": "Health", "priority": 120},
+
+  {"pattern": "\\b(geico|state farm|progressive|allstate|insurance|premium)\\b", "field": "both", "is_regex": true, "category": "Insurance", "priority": 120},
+
+  {"pattern": "\\b(cinema|movie|amc|theatre|theater|steam|playstation|xbox|nintendo|concert|ticketmaster)\\b", "field": "both", "is_regex": true, "category": "Entertainment", "priority": 110},
+
+  {"pattern": "\\b(gym|fitness|planet fitness|equinox|yoga|peloton)\\b", "field": "both", "is_regex": true, "category": "Fitness", "priority": 120},
+
+  {"pattern": "\\b(fee|service charge|interest charge|atm fee|overdraft)\\b", "field": "both", "is_regex": true, "category": "Fees & Charges", "priority": 120}
+]

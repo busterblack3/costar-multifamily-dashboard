@@ -1,0 +1,3 @@
+# Only third-party dependency. Everything else is Python stdlib.
+# (If requests is unavailable, the client falls back to urllib.)
+requests>=2.25

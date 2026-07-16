@@ -1,0 +1,80 @@
+{
+  "errors": [],
+  "accounts": [
+    {
+      "org": {
+        "domain": "demobank.example",
+        "name": "Demo Bank",
+        "sfin-url": "https://sfin.example"
+      },
+      "id": "demo-checking",
+      "name": "Everyday Checking",
+      "currency": "USD",
+      "balance": "8412.55",
+      "available-balance": "8412.55",
+      "balance-date": 1752624000,
+      "transactions": [
+        {
+          "id": "txn-sample-1",
+          "posted": 1751500800,
+          "amount": "3200.00",
+          "description": "DIRECT DEP ACME CORP",
+          "payee": "ACME CORP PAYROLL",
+          "memo": "",
+          "pending": false
+        },
+        {
+          "id": "txn-sample-2",
+          "posted": 1751673600,
+          "amount": "-2450.00",
+          "description": "RENT SKYLINE LEASING",
+          "payee": "Skyline Apartments",
+          "memo": "",
+          "pending": false
+        },
+        {
+          "id": "txn-sample-3",
+          "posted": 1751932800,
+          "amount": "-142.30",
+          "description": "PGE UTILITY PAYMENT",
+          "payee": "PG&E",
+          "memo": "",
+          "pending": false
+        }
+      ]
+    },
+    {
+      "org": {
+        "domain": "demobank.example",
+        "name": "Demo Bank",
+        "sfin-url": "https://sfin.example"
+      },
+      "id": "demo-card",
+      "name": "Rewards Credit Card",
+      "currency": "USD",
+      "balance": "-742.18",
+      "available-balance": "9257.82",
+      "balance-date": 1752624000,
+      "transactions": [
+        {
+          "id": "txn-sample-4",
+          "posted": 1751846400,
+          "amount": "-15.99",
+          "description": "NETFLIX.COM",
+          "payee": "Netflix",
+          "memo": "",
+          "pending": false
+        },
+        {
+          "id": "txn-sample-5",
+          "posted": 1752019200,
+          "amount": "-63.40",
+          "description": "WHOLEFDS MARKET",
+          "payee": "Whole Foods Market",
+          "memo": "",
+          "pending": true
+        }
+      ]
+    }
+  ]
+}
